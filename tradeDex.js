@@ -1,4 +1,4 @@
-import { MaxUint256, ethers } from "ethers";
+import { MaxUint256, ethers, JsonRpcProvider } from "ethers";
 import dotenv from "dotenv";
 dotenv.config();
 import contracts from "./deployedContracts.js";
@@ -44,8 +44,9 @@ if (!privateKey) {
   process.exit();
 }
 
-const provider = new ethers.WebSocketProvider(process.env.GNOSIS_WSS);
+//const provider = new ethers.WebSocketProvider(process.env.GNOSIS_WSS);
 //const provider = new ethers.AlchemyProvider("goerli", process.env.ETHEREUM_RPC);
+const provider = new JsonRpcProvider(process.env.GNOSIS_RPC);
 if (!provider) {
   console.log("Provider not set up");
   process.exit();
@@ -55,7 +56,10 @@ const wallet = new ethers.Wallet(privateKey, provider);
 console.log("Trading from:", wallet.address);
 
 // get the dex address of target asset
-const dexAddress = contracts[100][0]["contracts"]["BasicDex" + name]["address"];
+const dexAddress =
+  contracts[process.env.GNOSIS_NETWORK_ID][0]["contracts"]["BasicDex" + name][
+    "address"
+  ];
 
 // how often to make trades (in milliseconds)
 const tradeFrequency = 15_000;

@@ -21,15 +21,20 @@ const provider = new ethers.JsonRpcProvider(process.env.GNOSIS_RPC);
 const funderWallet = new ethers.Wallet(privateKey, provider);
 
 // address of credit token and contract instance
-const creditAddress = contracts[100][0]["contracts"]["SaltToken"]["address"];
+const creditAddress =
+  contracts[process.env.GNOSIS_NETWORK_ID][0]["contracts"]["SaltToken"][
+    "address"
+  ];
 const creditContract = new ethers.Contract(
   creditAddress,
   assetTokenAbi,
   funderWallet
 );
 
+const HARDCODED_DELAY = 1000; //set to +5000 for gnosis chain
+
 // loop over fruits in array
-// create burner wallet, store private key in .env & return wallet info 
+// create burner wallet, store private key in .env & return wallet info
 for (let i = 0; i < fruits.length; i++) {
   // generate burner address
   const burner = await generateBurner(fruits[i].toUpperCase());
@@ -39,9 +44,15 @@ for (let i = 0; i < fruits.length; i++) {
 
   // get token/dex addresses
   const tokenName = fruits[i] + "Token";
-  const tokenAddress = contracts[100][0]["contracts"][tokenName]["address"];
+  const tokenAddress =
+    contracts[process.env.GNOSIS_NETWORK_ID][0]["contracts"][tokenName][
+      "address"
+    ];
   const dexName = "BasicDex" + fruits[i];
-  const dexAddress = contracts[100][0]["contracts"][dexName]["address"];
+  const dexAddress =
+    contracts[process.env.GNOSIS_NETWORK_ID][0]["contracts"][dexName][
+      "address"
+    ];
 
   const tokenContract = new ethers.Contract(
     tokenAddress,
@@ -50,10 +61,18 @@ for (let i = 0; i < fruits.length; i++) {
   );
 
   // send burner CREDIT + ASSET tokens
-  const transferCred = await creditContract.transfer(burner.address, ethers.parseEther("200"));
+  const transferCred = await creditContract.transfer(
+    burner.address,
+    ethers.parseEther("200")
+  );
   transferCred.wait();
-  const transferAsset = await tokenContract.transfer(burner.address, ethers.parseEther("200"));
+  await new Promise((r) => setTimeout(r, HARDCODED_DELAY));
+  const transferAsset = await tokenContract.transfer(
+    burner.address,
+    ethers.parseEther("200")
+  );
   transferAsset.wait();
+  await new Promise((r) => setTimeout(r, HARDCODED_DELAY));
   // send burner xDAI
   const transferXDai = await funderWallet.sendTransaction({
     to: burner.address,
@@ -62,6 +81,7 @@ for (let i = 0; i < fruits.length; i++) {
     nonce: await funderWallet.getNonce(),
   });
   transferXDai.wait();
+  await new Promise((r) => setTimeout(r, HARDCODED_DELAY));
 
   const burnerWallet = new ethers.Wallet(burner.privateKey, provider);
   const burnerCreditContract = new ethers.Contract(
@@ -76,12 +96,19 @@ for (let i = 0; i < fruits.length; i++) {
     burnerWallet
   );
 
-  const approveCred = await burnerCreditContract.approve(dexAddress, MaxUint256);
+  const approveCred = await burnerCreditContract.approve(
+    dexAddress,
+    MaxUint256
+  );
   approveCred.wait();
-  const approveAsset = await burnerTokenContract.approve(dexAddress, MaxUint256);
+  await new Promise((r) => setTimeout(r, HARDCODED_DELAY));
+  const approveAsset = await burnerTokenContract.approve(
+    dexAddress,
+    MaxUint256
+  );
   approveAsset.wait();
+  await new Promise((r) => setTimeout(r, HARDCODED_DELAY));
 }
-
 
 const addresses = { addresses: addressInfo };
 const jsonAddressInfo = JSON.stringify(addresses);
